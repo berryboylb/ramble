@@ -22,9 +22,15 @@ export interface View {
   invalidate(): void;
   /** Runs before every frame. */
   onFrame(callback: () => void): void;
+  /** Frees the GPU context and removes the listeners. */
+  dispose(): void;
 }
 
-export function createView(container: HTMLElement, labelRoot: HTMLElement): View {
+export function createView(
+  container: HTMLElement,
+  labelRoot: HTMLElement,
+  { board = true }: { board?: boolean } = {},
+): View {
   const renderer = new WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   setAnisotropy(renderer.capabilities.getMaxAnisotropy());
@@ -38,7 +44,8 @@ export function createView(container: HTMLElement, labelRoot: HTMLElement): View
   sun.position.set(40, 90, 60);
   const fill = new DirectionalLight('#ffffff', 0.5);
   fill.position.set(-40, -60, -30);
-  scene.add(sun, fill, createBoard());
+  scene.add(sun, fill);
+  if (board) scene.add(createBoard());
 
   const camera = new PerspectiveCamera(40, 1, 0.5, 3000);
   const labels = new Labels(labelRoot);
@@ -61,14 +68,22 @@ export function createView(container: HTMLElement, labelRoot: HTMLElement): View
   };
   const controls = new OrbitCamera(camera, canvas, invalidate);
 
-  new ResizeObserver(() => {
+  const resize = new ResizeObserver(() => {
     const width = container.clientWidth;
     const height = container.clientHeight;
     renderer.setSize(width, height);
     camera.aspect = width / Math.max(height, 1);
     camera.updateProjectionMatrix();
     invalidate();
-  }).observe(container);
+  });
+  resize.observe(container);
+
+  const dispose = () => {
+    resize.disconnect();
+    controls.dispose();
+    renderer.dispose();
+    canvas.remove();
+  };
 
   return {
     renderer,
@@ -79,5 +94,6 @@ export function createView(container: HTMLElement, labelRoot: HTMLElement): View
     canvas,
     invalidate,
     onFrame: (cb) => callbacks.push(cb),
+    dispose,
   };
 }

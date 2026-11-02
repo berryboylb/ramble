@@ -4,7 +4,7 @@ Ramble is a web platform where learners build electronic circuits from 3D
 components, run them in a simulator, and learn how each part works. Users can
 also create their own components or remix existing ones.
 
-Status: **phase 1 built** (2026-11-02). Phases 2 to 4 are plans.
+Status: **phases 1 and 2 built** (2026-11-02). Phases 3 and 4 are plans.
 
 ## How to run
 
@@ -63,7 +63,7 @@ tier is under 2 KB and makes the page usable before any 3D code arrives.
 | 3    | Shape builders, 1 chunk per shape kind (`axial`, `radial`, `coil`, ...)         | First time a part of that kind is shown | 2.5 KB each         |
 | 4    | Part definitions, 1 JSON file per part                                          | When the user opens or places the part  | 1.5 KB each         |
 | 5    | Simulator worker, then 1 chunk per electrical model                             | When the user presses Run               | 10 KB, 2.5 KB/model |
-| 6    | Remix editor, oscilloscope, import and export                                   | When the user opens that tool           | 15 KB each          |
+| 6    | Part editor (remix, new part, import, export, share); later the oscilloscope    | When the user opens that tool           | 15 KB each          |
 
 What the user gets at each step:
 
@@ -179,6 +179,23 @@ Output of `npm run build`. Sizes are gzip, from `tools/check-size.js`.
 | 5    | Simulator worker                         | 1.99 KB                      | 10 KB  |
 | 5    | Each simulation model (8 files)          | 0.20 to 0.41 KB              | 2.5 KB |
 
+### 4.3 Phase 2 build (2026-11-02)
+
+| Tier | Output                     | Gzip                         | Budget | Change from phase 1 |
+| ---- | -------------------------- | ---------------------------- | ------ | ------------------- |
+| 0    | `index.html` + boot script | 1.11 + 0.85 KB = **1.97 KB** | 2 KB   | none                |
+| 2    | 3D app with three.js       | 149.35 KB                    | 150 KB | +2.54 KB            |
+| 5    | Simulator worker           | 2.01 KB                      | 10 KB  | +0.02 KB            |
+| 6    | Part editor                | 5.83 KB                      | 15 KB  | new                 |
+
+- Tier 2 grew by the parts of phase 2 that the app needs at once: storage, "My
+  parts", the symbol table, board save and restore, and the new toolbar
+  actions. Code that only the editor uses (the remix diff, the share-link codec,
+  the defaults, the editor styles) is in the tier 6 chunk.
+- Tier 2 has 0.65 KB left in its budget. three.js is about 135 KB of the
+  149.35 KB. The next tier 2 feature must first make room, for example by moving
+  rarely used app code to a lazy chunk.
+
 - The camera control is inside the tier 2 chunk. Its size is not measured on
   its own.
 - Headless Chromium on the dev server (2026-11-02): the library list showed
@@ -235,9 +252,14 @@ dist/catalog/
 - `upsert(input)` resolves `extends` (remix), validates the result, stores it,
   and tells every listener the part id. Parts that extend the changed part are
   updated too.
-- `on(listener)` subscribes to changes. It returns a function that unsubscribes.
-
-`remove(id)` comes with the remix editor in phase 2.
+- `resolve(input)` resolves `extends` and loads the base parts, but does not
+  validate or store. The editor uses it for drafts.
+- `remove(id)` removes a part and tells every listener. The caller must check
+  first that nothing uses it.
+- `list()`, `baseOf(id)`, `dependants(id)` and `isCatalogPart(id)` answer
+  questions for the editor and "My parts".
+- `on(listener)` subscribes to changes (`changed` or `removed`). It returns a
+  function that unsubscribes.
 
 The 3D scene and the UI subscribe to these events. When a definition changes,
 the scene rebuilds only the instances of that part. The rest of the scene stays
@@ -268,21 +290,58 @@ refetch is different.
 
 ### 5.5 Source 2: users, in the browser
 
-- The remix editor (tier 6) shows a definition as a form and as JSON. Each edit
-  calls `registry.upsert` after a short delay, so the 3D preview updates as the
-  user types.
-- Saved custom parts go to IndexedDB. The registry loads them at startup.
-- Users can export a part as a `.json` file, import a file, or share a part in a
-  link. The link holds the compressed definition in the URL hash.
+The part editor (`src/editor/`, tier 6) opens in 4 ways:
 
-### 5.6 Source 3: the team, in production
+| Start       | Where                                                | Result                                         |
+| ----------- | ---------------------------------------------------- | ---------------------------------------------- |
+| Remix part  | Inspector, for a built-in part on the board          | A copy with `extends` set to the built-in part |
+| Edit part   | Inspector, for a custom part on the board            | The saved part                                 |
+| New part    | Toolbar                                              | A box with 2 pins that acts as a resistor      |
+| Import part | Toolbar (a `.json` file), or a share link in the URL | The part from the file or the link             |
+
+- **Form and JSON.** The form edits a full draft: general fields, the 3D shape,
+  the electrical model, ratings, markings and learn text. The JSON box shows
+  what Save stores. "Apply JSON" reads an edited JSON back into the form.
+- **Live preview.** A small 3D view of the part, with its own 360° camera and
+  pin labels (for example `1 a`, `2 b`). It updates about 120 ms after each
+  edit. It draws only a valid draft.
+- **Validation.** The editor uses the shared `validate()` plus 2 rules for user
+  parts: the id must start with `my-`, and the id must be free. Save is off
+  while there are problems. Built-in ids must not start with `my-`; the catalog
+  plugin checks this. So user parts and built-in parts cannot clash.
+- **Save.** It calls `registry.upsert`, so placed copies of the part on the
+  board update at once. A remix stores only what differs from its base
+  (`src/editor/remix.ts`). A change of shape kind or model type stores the full
+  part, because a merge would mix the fields of 2 kinds.
+- **Custom shape builder.** For the `custom` kind, the form lists the solids
+  (box, cylinder, sphere) with size, position, rotation, colour and metal, and
+  the pins with their positions. Each pin shows the terminal it connects to.
+- **Storage.** Saved parts go to IndexedDB (`src/core/storage.ts`). At startup
+  the app loads them into the registry and shows them under "My parts" in the
+  library. A part cannot be deleted while it is on the board or while another
+  part extends it.
+- **Download JSON and share links.** Both give a part that works in another
+  browser. A remix of a built-in part stays a remix. A remix of a custom part is
+  saved in full, because the other browser does not have its base. A share link
+  holds the part compressed in the URL hash (`#part=…`), with the browser's own
+  `CompressionStream`. A 4.7 kΩ resistor remix gives a link of about 200
+  characters.
+
+### 5.6 The saved board
+
+The board saves itself to IndexedDB about 400 ms after each change: parts,
+positions, rotations, changed values and wires. A reload brings it back. A part
+that no longer exists is skipped, and the hint names it. "Clear board" starts a
+new board.
+
+### 5.7 Source 3: the team, in production
 
 To add or fix a built-in part, the team adds or edits a file in
 `catalog/parts/` and publishes the catalog. The catalog can deploy on its
 own, without an application release. In phase 4, the catalog moves behind an
 API. The community gallery uses the same format.
 
-### 5.7 When code is needed
+### 5.8 When code is needed
 
 Most new parts need data only: a new value, size, colour, or a remix.
 
@@ -473,11 +532,14 @@ src/
   core/
     types.ts              part, catalog, circuit and shell-event types
     models.ts             terminal names per model
-    validate.ts           part validation (shared by build, registry and inspector)
+    validate.ts           part validation (shared by build, registry, inspector and editor)
     resolve.ts            `extends` merge
     registry.ts           loaded parts and change events
     netlist.ts            joins wired pins into nodes
     units.ts              SI formatting and parsing (4.7k, 100n)
+    symbols.ts            schematic symbols (catalog build, "My parts", editor)
+    storage.ts            IndexedDB for custom parts and the saved board
+    share.ts              share-link encoding (used by the editor)
   render/
     scene.ts              renderer, lights, render on demand
     controls.ts           360° orbit, zoom to cursor, part focus, presets
@@ -485,6 +547,7 @@ src/
     parts.ts              shared builder helpers: leads, legs, markings
     markings.ts           canvas text textures
     labels.ts             HTML labels over the 3D view
+    pins.ts               pin markers that draw on top of bodies
     cache.ts              shared geometry and material caches
     shapes/               tier 3: 1 builder per shape kind, loaded on demand
   sim/
@@ -496,9 +559,16 @@ src/
     warnings.ts           rating and polarity warnings
     protocol.ts           worker messages
     models/               1 file per electrical model, loaded on demand
-  workbench/workbench.ts  place, move, rotate, wire, select, part view, labels
+  workbench/workbench.ts  place, move, rotate, wire, select, part view, labels, save and restore
+  editor/                 tier 6: part editor
+    editor.ts             form, JSON, live preview, save, download, share
+    remix.ts              stores a remix as its changes only
+    defaults.ts           start values for each shape kind and model type
+    editor.css            editor styles
   ui/
     inspector.ts          values, actions and live readout of the selected part
+    fields.ts             field labels and units (inspector and editor)
+    myparts.ts            "My parts" in the library list
     learn.ts              learn panel (tier 0)
     app.css               tier 2 styles
 catalog/parts/            1 JSON file per built-in part (16 files)
@@ -506,25 +576,24 @@ public/_headers           HTTP cache headers for the host
 tools/
   vite-plugin-catalog.ts  catalog build, dev server and live updates
   vite-plugin-shell.ts    writes the app URL into index.html
-  symbols.ts              schematic symbols for the library list
   check-size.js           size check against budgets.json
 budgets.json              gzip budget per tier
-tests/                    simulator, netlist, registry, catalog, camera and units tests
+tests/                    simulator, netlist, registry, catalog, camera, units, remix and share tests
 docs/                     this file
 ```
 
 ## 11. Phases
 
-| Phase       | Result                                                                                                 |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| 1. Core     | Tiered loading and size budgets, catalog plugin, 3D workbench, place and wire, simulator worker, learn |
-| 2. Create   | Remix editor, custom primitive builder, JSON import and export, share by link                          |
-| 3. Depth    | Transistor and 555 models, oscilloscope and multimeter, guided lessons                                 |
-| 4. Platform | Accounts, backend to save projects, catalog API, community gallery, teacher assignments                |
+| Phase       | Result                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| 1. Core     | Done. Tiered loading and size budgets, catalog plugin, 3D workbench, place and wire, simulator worker, learn |
+| 2. Create   | Done. Part editor, custom shape builder, JSON import and export, share by link, saved parts and board        |
+| 3. Depth    | Transistor and 555 models, oscilloscope and multimeter, guided lessons                                       |
+| 4. Platform | Accounts, backend to save projects, catalog API, community gallery, teacher assignments                      |
 
 ## 12. Tests
 
-Phase 1 has 29 tests in 6 files. All pass.
+There are 37 tests in 8 files. All pass.
 
 - Simulator: voltage divider, RC charge to 63 % at t = RC, red LED at about
   2 V through 330 Ω, reversed diode blocks, inductor current settles at V / R,
@@ -540,10 +609,22 @@ Phase 1 has 29 tests in 6 files. All pass.
 - Camera: no jump or flip over the poles, level horizon after yaw, drag
   direction is kept when upside down.
 - Units: SI format and parse, values below 1 pico are not shown as 0.
+- Remix: only changed fields are stored, a remix resolves back to the full
+  part, a new shape kind stores the full part.
+- Share links: round trip, URL-safe characters, a bad hash is rejected.
+- Registry (phase 2): `remove`, `dependants`, `baseOf`, `isCatalogPart`, and
+  `resolve` that does not store. Catalog: a built-in id with the `my-` prefix
+  is rejected.
 - Size: `check-size.js` runs in `npm run build`.
 
-Not set up yet: browser tests in CI, and Lighthouse on a throttled mobile
-profile. The project has no CI yet.
+Browser checks (headless Chromium, by hand, not in CI): phase 1 place, wire
+and run; phase 2 remix and save, place from "My parts", new part, delete
+refused while in use, reload restores parts and board, share link opens in a
+fresh profile.
+
+Not set up yet: browser tests in CI, Lighthouse on a throttled mobile profile,
+and unit tests for `storage.ts` (they need an IndexedDB test double). The
+project has no CI yet.
 
 ## 13. Tooling
 
@@ -566,10 +647,13 @@ Phase 1 uses the recommendation for each decision.
 | Realism   | Clean and simple, or near photo-real            | Clean and simple. It is lighter and easier to read. |
 | Host      | Not chosen                                      | `public/_headers` works on hosts that read it.      |
 
-### Known limits of phase 1
+### Known limits
 
-- The board is not saved. A page reload clears it. Saving comes with IndexedDB
-  storage in phase 2.
+- Custom parts and the board are saved in this browser only. Another device does
+  not see them. Accounts come in phase 4.
+- There is 1 saved board. Named projects are not in phase 2.
+- The editor shows only the fields that the draft has. To add an optional field
+  that is not there (for example a stripe on an axial body), edit the JSON.
 - A change to parts or wires restarts the simulation from power off. A change
   to a value (for example a switch toggle) keeps the state.
 - The time step is fixed at 10 µs. Very fast circuits (above about 10 kHz) are
