@@ -1,0 +1,20 @@
+{
+  "id": "transformer-10to1",
+  "name": "Transformer 10:1",
+  "category": "passive",
+  "version": 1,
+  "symbol": "transformer",
+  "shape": { "kind": "transformer", "width": 22, "height": 18, "depth": 14, "color": "#4a4f57" },
+  "model": { "type": "transformer", "primaryInductance": 10, "turnsRatio": 0.1, "coupling": 0.999 },
+  "ratings": { "maxPower": 3 },
+  "markings": [{ "text": "10:1", "face": "top", "height": 3 }],
+  "learn": {
+    "summary": "A transformer moves AC energy between 2 coils through a shared magnetic core. The turns ratio sets the voltage ratio.",
+    "formula": "Vs / Vp = Ns / Np",
+    "tips": [
+      "Pins p1 and p2 are the primary (red winding). Pins s1 and s2 are the secondary (yellow winding).",
+      "It works only with changing current (AC). With DC, the secondary voltage falls to 0.",
+      "A step-down transformer gives a lower voltage and a higher current on the secondary."
+    ]
+  }
+}

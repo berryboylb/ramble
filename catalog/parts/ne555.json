@@ -1,0 +1,18 @@
+{
+  "id": "ne555",
+  "name": "Timer NE555",
+  "category": "ic",
+  "version": 1,
+  "symbol": "ic",
+  "shape": { "kind": "dip", "pins": 8, "color": "#1a1a1a" },
+  "model": { "type": "none", "pins": ["GND", "TRIG", "OUT", "RESET", "CTRL", "THR", "DIS", "VCC"] },
+  "markings": [{ "text": "NE555", "face": "top", "height": 1.6, "color": "#d0d4da" }],
+  "learn": {
+    "summary": "The 555 timer makes pulses and square waves with a few resistors and a capacitor.",
+    "formula": "f ≈ 1.44 / ((R1 + 2 × R2) × C)",
+    "tips": [
+      "The notch and the dot mark pin 1. Pins count anticlockwise from there, seen from the top.",
+      "Simulation of this chip comes in a later phase. You can place it and wire it now."
+    ]
+  }
+}

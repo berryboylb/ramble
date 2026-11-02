@@ -1,0 +1,32 @@
+{
+  "$comment": "Gzip size budgets in bytes. tools/check-size.js fails the build when a file or group goes over. Every output file must match a rule.",
+  "rules": [
+    {
+      "name": "Tier 0: page shell (HTML + boot script)",
+      "match": ["^index\\.html$", "^assets/index-[\\w-]+\\.js$"],
+      "total": 2048
+    },
+    {
+      "name": "Tier 2: 3D app with three.js",
+      "match": ["^assets/app-[\\w-]+\\.js$"],
+      "each": 153600
+    },
+    {
+      "name": "Tier 5: simulator worker",
+      "match": ["^assets/worker-[\\w-]+\\.js$"],
+      "each": 10240
+    },
+    {
+      "name": "Tiers 3 and 5: shape builders and simulation models",
+      "match": ["^assets/(?!index-|app-|worker-)[\\w-]+\\.js$"],
+      "each": 2560
+    },
+    {
+      "name": "Tier 1: catalog index and categories",
+      "match": ["^catalog/index\\.json$", "^catalog/c/.+\\.json$"],
+      "each": 4096
+    },
+    { "name": "Tier 4: part files", "match": ["^catalog/parts/.+\\.json$"], "each": 1536 },
+    { "name": "Host files", "match": ["^_headers$", "^\\.vite/"], "ignore": true }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "id": "resistor-220r",
+  "extends": "resistor-1k",
+  "name": "Resistor 220 Ω, 1/4 W",
+  "model": { "type": "resistor", "resistance": 220 }
+}

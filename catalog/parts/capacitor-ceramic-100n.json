@@ -1,0 +1,20 @@
+{
+  "id": "capacitor-ceramic-100n",
+  "name": "Ceramic capacitor 100 nF",
+  "category": "passive",
+  "version": 1,
+  "symbol": "capacitor",
+  "shape": { "kind": "disc", "radius": 2.5, "thickness": 1.2, "pitch": 5.08, "color": "#d98c3a" },
+  "model": { "type": "capacitor", "capacitance": 1e-7 },
+  "ratings": { "maxVoltage": 50 },
+  "markings": [{ "text": "104", "face": "front", "height": 1.4, "color": "#3a2a10" }],
+  "learn": {
+    "summary": "A capacitor stores charge in an electric field. It passes changing signals and blocks steady DC.",
+    "formula": "Q = C × V   τ = R × C",
+    "tips": [
+      "The code 104 means 10 × 10⁴ pF, which is 100 nF.",
+      "A ceramic capacitor has no polarity.",
+      "A 100 nF capacitor next to a chip filters fast noise on its supply."
+    ]
+  }
+}

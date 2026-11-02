@@ -1,0 +1,14 @@
+{
+  "id": "led-green-5mm",
+  "extends": "led-red-5mm",
+  "name": "LED green 5 mm",
+  "shape": { "color": "#30e060" },
+  "model": { "type": "diode", "saturationCurrent": 6e-21 },
+  "learn": {
+    "tips": [
+      "Always use a series resistor. Without one, the current gets too high and the LED fails.",
+      "The longer leg is the anode (+). The flat edge of the rim marks the cathode (−).",
+      "This green LED drops about 2.2 V. A typical current is 10 to 20 mA."
+    ]
+  }
+}

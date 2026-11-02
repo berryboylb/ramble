@@ -1,0 +1,28 @@
+{
+  "id": "diode-1n4007",
+  "name": "Rectifier diode 1N4007",
+  "category": "semiconductor",
+  "version": 1,
+  "symbol": "diode",
+  "shape": {
+    "kind": "axial",
+    "bodyLength": 5.2,
+    "bodyRadius": 1.35,
+    "pitch": 10.16,
+    "color": "#1b1b1b",
+    "profile": "straight",
+    "stripe": "#c9ccd1"
+  },
+  "model": { "type": "diode", "saturationCurrent": 7.03e-9, "emission": 1.808 },
+  "ratings": { "maxCurrent": 1, "maxVoltage": 1000 },
+  "markings": [{ "text": "4007", "face": "front", "height": 0.9, "color": "#c9ccd1" }],
+  "learn": {
+    "summary": "A rectifier diode lets current flow in 1 direction. Use it to change AC into DC.",
+    "formula": "I = Is × (e^(V / (n × Vt)) − 1)",
+    "tips": [
+      "The grey band marks the cathode.",
+      "It carries up to 1 A and blocks up to 1000 V in reverse.",
+      "4 diodes in a bridge give full-wave rectification."
+    ]
+  }
+}

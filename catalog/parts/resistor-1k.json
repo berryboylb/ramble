@@ -1,0 +1,27 @@
+{
+  "id": "resistor-1k",
+  "name": "Resistor 1 kΩ, 1/4 W",
+  "category": "passive",
+  "version": 1,
+  "symbol": "resistor",
+  "shape": {
+    "kind": "axial",
+    "bodyLength": 6.3,
+    "bodyRadius": 1.2,
+    "pitch": 10.16,
+    "color": "#d9c39a",
+    "profile": "bone",
+    "bands": "resistor"
+  },
+  "model": { "type": "resistor", "resistance": 1000 },
+  "ratings": { "maxPower": 0.25 },
+  "learn": {
+    "summary": "A resistor limits the current in a circuit. Its value is in ohms (Ω).",
+    "formula": "V = I × R   P = I² × R",
+    "tips": [
+      "Read the colour bands from the end with no gap: 2 digits, the multiplier, then the tolerance.",
+      "This part is rated 0.25 W. More power makes it overheat.",
+      "A resistor has no polarity. You can connect it either way."
+    ]
+  }
+}

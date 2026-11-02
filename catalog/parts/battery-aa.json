@@ -1,0 +1,16 @@
+{
+  "id": "battery-aa",
+  "name": "Cell AA 1.5 V",
+  "category": "source",
+  "version": 1,
+  "symbol": "battery",
+  "shape": { "kind": "cell", "length": 50.5, "radius": 7.25, "color": "#2a6fdb" },
+  "model": { "type": "battery", "voltage": 1.5, "internalResistance": 0.15 },
+  "ratings": { "maxCurrent": 2 },
+  "markings": [{ "text": "AA 1.5V", "face": "top", "height": 4 }],
+  "learn": {
+    "summary": "An AA cell gives about 1.5 V DC.",
+    "formula": "Vtotal = V1 + V2 + … (cells in series)",
+    "tips": ["The end with the bump is positive (+).", "2 cells in series give 3 V."]
+  }
+}

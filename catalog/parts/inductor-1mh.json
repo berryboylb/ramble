@@ -1,0 +1,26 @@
+{
+  "id": "inductor-1mh",
+  "name": "Inductor 1 mH",
+  "category": "passive",
+  "version": 1,
+  "symbol": "inductor",
+  "shape": {
+    "kind": "coil",
+    "radius": 3,
+    "length": 6,
+    "turns": 12,
+    "pitch": 5.08,
+    "color": "#3a3a3a",
+    "wire": "#b87333"
+  },
+  "model": { "type": "inductor", "inductance": 0.001, "resistance": 1.5 },
+  "ratings": { "maxCurrent": 0.5 },
+  "learn": {
+    "summary": "An inductor stores energy in a magnetic field. It resists changes in current.",
+    "formula": "V = L × di/dt   τ = L / R",
+    "tips": [
+      "At DC, an inductor acts like a wire with a small resistance. This one has 1.5 Ω.",
+      "When you open a circuit with an inductor, the voltage can jump very high. A diode across the coil protects the circuit."
+    ]
+  }
+}

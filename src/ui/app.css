@@ -1,0 +1,103 @@
+/* Styles for tier 2 and later. The page shell styles are inline in index.html. */
+
+.label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: -1.6rem 0 0 0;
+  translate: -50% 0;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgb(15 18 22 / 0.85);
+  border: 1px solid var(--line);
+  font:
+    12px/1.4 ui-monospace,
+    monospace;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.label.pin {
+  color: var(--accent);
+}
+
+#inspect label {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.5rem 0;
+  color: var(--dim);
+}
+
+#inspect input {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+#inspect input.bad {
+  border-color: #e5484d;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+}
+
+.readout {
+  font:
+    13px ui-monospace,
+    monospace;
+  color: var(--accent);
+}
+
+#warn:not(:empty) {
+  color: #ff8b8b;
+}
+
+main canvas {
+  display: block;
+  touch-action: none;
+}
+
+#labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#views {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+#tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+select {
+  font: inherit;
+  color: inherit;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+}
+
+button {
+  cursor: pointer;
+}
+
+#warn {
+  margin-left: 0.5rem;
+}

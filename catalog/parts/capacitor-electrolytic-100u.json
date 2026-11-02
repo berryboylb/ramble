@@ -1,0 +1,27 @@
+{
+  "id": "capacitor-electrolytic-100u",
+  "name": "Electrolytic capacitor 100 µF, 25 V",
+  "category": "passive",
+  "version": 1,
+  "symbol": "capacitor-polarized",
+  "shape": {
+    "kind": "radial",
+    "radius": 3.15,
+    "height": 11,
+    "pitch": 2.54,
+    "color": "#1f3f7a",
+    "stripe": "#d7dde8"
+  },
+  "model": { "type": "capacitor", "capacitance": 1e-4, "polarized": true },
+  "ratings": { "maxVoltage": 25 },
+  "markings": [{ "text": "100µF 25V", "face": "front", "height": 1.1, "color": "#e8edf5" }],
+  "learn": {
+    "summary": "An electrolytic capacitor stores a large charge in a small size. It has polarity.",
+    "formula": "τ = R × C",
+    "tips": [
+      "The stripe marks the negative (−) lead. Pin + is on the other side.",
+      "Connected backwards, it can fail. The simulator warns you.",
+      "Keep the voltage below its rating, here 25 V."
+    ]
+  }
+}

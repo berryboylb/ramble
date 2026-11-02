@@ -1,0 +1,20 @@
+{
+  "id": "battery-9v",
+  "name": "Battery 9 V",
+  "category": "source",
+  "version": 1,
+  "symbol": "battery",
+  "shape": { "kind": "battery", "length": 48.5, "width": 26.5, "height": 17.5, "color": "#2b2b2b" },
+  "model": { "type": "battery", "voltage": 9, "internalResistance": 1.5 },
+  "ratings": { "maxCurrent": 0.5 },
+  "markings": [{ "text": "9V", "face": "top", "height": 8, "color": "#f5d90a" }],
+  "learn": {
+    "summary": "A battery changes chemical energy into a steady DC voltage.",
+    "formula": "Vterminal = V − I × Rinternal",
+    "tips": [
+      "The small round snap is positive (+). The large hexagonal snap is negative (−).",
+      "Every battery has internal resistance, so its voltage drops when you take more current.",
+      "Do not connect + directly to −. A short circuit makes the battery hot."
+    ]
+  }
+}

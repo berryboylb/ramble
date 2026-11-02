@@ -1,0 +1,23 @@
+{
+  "id": "switch-slide",
+  "name": "Slide switch",
+  "category": "control",
+  "version": 1,
+  "symbol": "switch",
+  "shape": {
+    "kind": "switch",
+    "length": 8.6,
+    "width": 4.4,
+    "height": 3.6,
+    "pitch": 5.08,
+    "color": "#9aa0a8"
+  },
+  "model": { "type": "switch", "closed": false },
+  "learn": {
+    "summary": "A switch opens or closes a circuit by hand.",
+    "tips": [
+      "Closed: current flows. Open: no current flows.",
+      "Select the switch and press Space, or use the button in the inspector."
+    ]
+  }
+}

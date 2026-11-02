@@ -1,0 +1,18 @@
+{
+  "id": "transistor-2n3904",
+  "name": "Transistor 2N3904 (NPN)",
+  "category": "semiconductor",
+  "version": 1,
+  "symbol": "npn",
+  "shape": { "kind": "to92", "color": "#1a1a1a" },
+  "model": { "type": "none", "pins": ["E", "B", "C"] },
+  "markings": [{ "text": "2N3904", "face": "front", "height": 0.7, "color": "#d0d4da" }],
+  "learn": {
+    "summary": "A transistor uses a small base current to control a larger collector current. It can switch or amplify.",
+    "formula": "Ic ≈ β × Ib",
+    "tips": [
+      "With the flat face toward you, the pins are E, B and C from left to right.",
+      "Simulation of this part comes in a later phase. You can place it and wire it now."
+    ]
+  }
+}

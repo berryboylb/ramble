@@ -1,0 +1,28 @@
+{
+  "id": "diode-1n4148",
+  "name": "Diode 1N4148",
+  "category": "semiconductor",
+  "version": 1,
+  "symbol": "diode",
+  "shape": {
+    "kind": "axial",
+    "bodyLength": 3.8,
+    "bodyRadius": 0.85,
+    "pitch": 7.62,
+    "color": "#d9772b",
+    "opacity": 0.75,
+    "profile": "straight",
+    "stripe": "#111111"
+  },
+  "model": { "type": "diode", "saturationCurrent": 2.52e-9, "emission": 1.752 },
+  "ratings": { "maxCurrent": 0.3, "maxVoltage": 100 },
+  "learn": {
+    "summary": "A diode lets current flow in 1 direction only: from the anode to the cathode.",
+    "formula": "I = Is × (e^(V / (n × Vt)) − 1)",
+    "tips": [
+      "The black band marks the cathode.",
+      "A silicon diode needs about 0.6 to 0.7 V before it conducts.",
+      "The 1N4148 is a fast small-signal diode for up to 300 mA."
+    ]
+  }
+}

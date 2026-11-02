@@ -1,0 +1,40 @@
+{
+  "id": "ac-source",
+  "name": "AC source 12 V, 50 Hz",
+  "category": "source",
+  "version": 1,
+  "symbol": "ac",
+  "shape": {
+    "kind": "custom",
+    "primitives": [
+      { "type": "box", "size": [36, 18, 26], "position": [0, 9, 0], "color": "#3a3f47" },
+      { "type": "box", "size": [30, 12, 0.4], "position": [0, 9, 13.2], "color": "#1d2127" },
+      {
+        "type": "cylinder",
+        "size": [3, 3, 3],
+        "position": [-8, 9, 14.5],
+        "rotation": [90, 0, 0],
+        "color": "#d0d4da",
+        "metal": true
+      },
+      { "type": "cylinder", "size": [1.6, 1.6, 4], "position": [8, 20, 4], "color": "#e5484d" },
+      { "type": "cylinder", "size": [1.6, 1.6, 4], "position": [8, 20, -4], "color": "#222222" }
+    ],
+    "pins": [
+      [8, 22.2, 4],
+      [8, 22.2, -4]
+    ]
+  },
+  "model": { "type": "acsource", "amplitude": 12, "frequency": 50, "internalResistance": 0.5 },
+  "ratings": { "maxCurrent": 1 },
+  "markings": [{ "text": "~ 50 Hz", "position": [5, 9, 13.45], "height": 3, "color": "#4cc38a" }],
+  "learn": {
+    "summary": "An AC source gives a voltage that changes direction many times each second. Mains power and audio signals are AC.",
+    "formula": "v(t) = A × sin(2π × f × t)   Vrms = A / √2",
+    "tips": [
+      "The red terminal is +. The black terminal is −.",
+      "Change the amplitude and frequency in the inspector.",
+      "Use a slower simulation speed to watch the voltage change."
+    ]
+  }
+}

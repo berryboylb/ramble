@@ -1,0 +1,19 @@
+{
+  "id": "led-red-5mm",
+  "name": "LED red 5 mm",
+  "category": "semiconductor",
+  "version": 1,
+  "symbol": "led",
+  "shape": { "kind": "led", "radius": 2.5, "pitch": 2.54, "color": "#ff3030" },
+  "model": { "type": "diode", "saturationCurrent": 1e-18, "emission": 2 },
+  "ratings": { "maxCurrent": 0.03, "maxVoltage": 5 },
+  "learn": {
+    "summary": "A light-emitting diode (LED) gives light when current flows from the anode to the cathode.",
+    "formula": "R = (Vsupply − Vf) / I",
+    "tips": [
+      "Always use a series resistor. Without one, the current gets too high and the LED fails.",
+      "The longer leg is the anode (+). The flat edge of the rim marks the cathode (−).",
+      "A red LED drops about 2 V. A typical current is 10 to 20 mA."
+    ]
+  }
+}
