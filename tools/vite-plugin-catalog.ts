@@ -10,8 +10,8 @@ import type {
   PartDef,
   PartInput,
 } from '../src/core/types.ts';
-import { CATEGORIES, validate } from '../src/core/validate.ts';
-import { SYMBOLS } from './symbols.ts';
+import { CATEGORIES, CUSTOM_PREFIX, isCustomId, validate } from '../src/core/validate.ts';
+import { SYMBOLS } from '../src/core/symbols.ts';
 
 // Builds the component catalog from catalog/parts/*.json.
 // Dev server: serves the catalog from memory and tells the browser when a part file changes.
@@ -64,6 +64,11 @@ export function buildCatalog(dir: string, mode: 'dev' | 'build'): Catalog {
     const problems = validate(part);
     const symbol = SYMBOLS[part.symbol];
     if (!symbol) problems.push(`${part.id}: unknown symbol "${part.symbol}".`);
+    if (isCustomId(part.id)) {
+      problems.push(
+        `${part.id}: built-in ids must not start with "${CUSTOM_PREFIX}". That prefix is for user parts.`,
+      );
+    }
     if (problems.length > 0) {
       errors.push(...problems);
       continue;

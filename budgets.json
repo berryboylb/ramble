@@ -17,8 +17,13 @@
       "each": 10240
     },
     {
+      "name": "Tier 6: part editor",
+      "match": ["^assets/editor-[\\w-]+\\.js$"],
+      "each": 15360
+    },
+    {
       "name": "Tiers 3 and 5: shape builders and simulation models",
-      "match": ["^assets/(?!index-|app-|worker-)[\\w-]+\\.js$"],
+      "match": ["^assets/(?!index-|app-|worker-|editor-)[\\w-]+\\.js$"],
       "each": 2560
     },
     {
@@ -26,7 +31,15 @@
       "match": ["^catalog/index\\.json$", "^catalog/c/.+\\.json$"],
       "each": 4096
     },
-    { "name": "Tier 4: part files", "match": ["^catalog/parts/.+\\.json$"], "each": 1536 },
-    { "name": "Host files", "match": ["^_headers$", "^\\.vite/"], "ignore": true }
+    {
+      "name": "Tier 4: part files",
+      "match": ["^catalog/parts/.+\\.json$"],
+      "each": 1536
+    },
+    {
+      "name": "Host files",
+      "match": ["^_headers$", "^\\.vite/"],
+      "ignore": true
+    }
   ]
 }

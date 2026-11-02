@@ -1,23 +1,8 @@
 import type { Learn } from '../core/types.ts';
 import { formatSI, parseSI } from '../core/units.ts';
-import { validate } from '../core/validate.ts';
+import { isCustomId, validate } from '../core/validate.ts';
 import { type Instance, modelOf, type Workbench } from '../workbench/workbench.ts';
-
-const UNITS: Record<string, string> = {
-  resistance: 'Ω',
-  capacitance: 'F',
-  inductance: 'H',
-  voltage: 'V',
-  internalResistance: 'Ω',
-  amplitude: 'V',
-  frequency: 'Hz',
-  saturationCurrent: 'A',
-  primaryInductance: 'H',
-};
-
-/** "internalResistance" → "Internal resistance". */
-const labelOf = (key: string) =>
-  key.replace(/[A-Z]/g, (c) => ` ${c.toLowerCase()}`).replace(/^./, (c) => c.toUpperCase());
+import { fieldLabel, labelOf, UNITS } from './fields.ts';
 
 /** Shows the selected part: its values, actions and live readout. */
 export class Inspector {
@@ -28,6 +13,8 @@ export class Inspector {
     private readonly root: HTMLElement,
     private readonly bench: Workbench,
     private readonly showLearn: (name: string, learn: Learn) => void,
+    /** Opens the part editor: a remix for a built-in part, an edit for a custom part. */
+    private readonly openEditor: (instance: Instance) => void,
   ) {
     this.readoutElement.className = 'readout';
   }
@@ -55,6 +42,9 @@ export class Inspector {
       this.button('Rotate (R)', () => this.bench.rotateSelected()),
       this.button('View close up (F)', () => this.bench.focusSelected()),
       this.button('Delete', () => this.bench.deleteSelected()),
+      this.button(isCustomId(instance.def.id) ? 'Edit part' : 'Remix part', () =>
+        this.openEditor(instance),
+      ),
     );
     this.root.append(actions, this.readoutElement);
     this.update();
@@ -89,7 +79,7 @@ export class Inspector {
       input.title = problems.join('\n');
       if (problems.length === 0) this.bench.setParam(instance, key, parsed);
     });
-    label.append(`${labelOf(key)}${unit ? ` (${unit})` : ''}`, input);
+    label.append(fieldLabel(key), input);
     return label;
   }
 

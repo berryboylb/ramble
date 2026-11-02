@@ -158,6 +158,24 @@ export interface ShellEvents {
   'ramble:learn': { name: string; learn: Learn };
 }
 
+// The saved board.
+
+export interface SavedPart {
+  id: string;
+  label: string;
+  defId: string;
+  params: Record<string, number | boolean>;
+  x: number;
+  z: number;
+  turns: number;
+}
+
+export interface SavedBoard {
+  version: 1;
+  parts: SavedPart[];
+  wires: { a: PinRef; b: PinRef }[];
+}
+
 // Circuit data passed from the workbench to the simulator.
 
 export interface PinRef {

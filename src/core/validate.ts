@@ -9,8 +9,13 @@ export const CATEGORIES: Record<Category, string> = {
   ic: 'Integrated circuits',
 };
 
+/** Parts that users make start with this prefix. Built-in parts never do, so the 2 cannot clash. */
+export const CUSTOM_PREFIX = 'my-';
+
+export const isCustomId = (id: string) => id.startsWith(CUSTOM_PREFIX);
+
 /** Positive numeric fields that each shape kind needs. */
-const SHAPE_FIELDS: Record<ShapeKind, string[]> = {
+export const SHAPE_FIELDS: Record<ShapeKind, string[]> = {
   axial: ['bodyLength', 'bodyRadius', 'pitch'],
   radial: ['radius', 'height', 'pitch'],
   disc: ['radius', 'thickness', 'pitch'],
@@ -26,7 +31,7 @@ const SHAPE_FIELDS: Record<ShapeKind, string[]> = {
 };
 
 /** Positive numeric fields that each model type needs. */
-const MODEL_FIELDS: Record<ModelType, string[]> = {
+export const MODEL_FIELDS: Record<ModelType, string[]> = {
   resistor: ['resistance'],
   capacitor: ['capacitance'],
   inductor: ['inductance'],

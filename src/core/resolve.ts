@@ -1,8 +1,8 @@
 import type { PartDef, PartInput } from './types.ts';
 
-type Json = Record<string, unknown>;
+export type Json = Record<string, unknown>;
 
-function isObject(value: unknown): value is Json {
+export function isObject(value: unknown): value is Json {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 

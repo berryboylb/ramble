@@ -2,7 +2,8 @@ import { resolvePart } from './resolve.ts';
 import type { CatalogEntry, PartDef, PartInput } from './types.ts';
 import { validate } from './validate.ts';
 
-type Listener = (id: string) => void;
+export type Change = 'changed' | 'removed';
+type Listener = (id: string, change: Change) => void;
 type FetchJson = (url: string) => Promise<unknown>;
 
 const defaultFetch: FetchJson = async (url) => {
@@ -37,6 +38,28 @@ export class Registry {
     return this.parts.get(id);
   }
 
+  /** Every loaded part. */
+  list(): PartDef[] {
+    return [...this.parts.values()];
+  }
+
+  /** The id that a loaded part extends, if any. */
+  baseOf(id: string): string | undefined {
+    return this.inputs.get(id)?.extends;
+  }
+
+  /** True for a part from the catalog. Custom parts are not in the catalog. */
+  isCatalogPart(id: string): boolean {
+    return this.urls.has(id);
+  }
+
+  /** Ids of loaded parts whose `extends` names this part. */
+  dependants(id: string): string[] {
+    return [...this.inputs.values()]
+      .filter((input) => input.extends === id)
+      .map((input) => input.id);
+  }
+
   /** Returns a part. Fetches it the first time. */
   async load(id: string): Promise<PartDef> {
     const part = this.parts.get(id);
@@ -49,16 +72,21 @@ export class Registry {
     if (this.parts.has(id)) await this.upsert(await this.fetchInput(id));
   }
 
+  /** Resolves `extends` and loads the base parts. Does not validate or store the part. */
+  async resolve(input: PartInput): Promise<PartDef> {
+    await this.loadBases(input);
+    return resolvePart(input, (id) => (id === input.id ? input : this.inputs.get(id)));
+  }
+
   /** Validates, resolves and stores a part, then tells every listener. */
   async upsert(input: PartInput): Promise<PartDef> {
-    await this.loadBases(input);
-    const part = resolvePart(input, (id) => (id === input.id ? input : this.inputs.get(id)));
+    const part = await this.resolve(input);
     const problems = validate(part);
     if (problems.length > 0) throw new ValidationError(problems);
 
     this.inputs.set(input.id, input);
     this.parts.set(part.id, part);
-    this.emit(part.id);
+    this.emit(part.id, 'changed');
 
     // Parts that extend this one must pick up the change.
     for (const other of this.inputs.values()) {
@@ -67,13 +95,20 @@ export class Registry {
     return part;
   }
 
+  /** Removes a part. The caller must check first that nothing uses it. */
+  remove(id: string): void {
+    if (!this.parts.delete(id)) return;
+    this.inputs.delete(id);
+    this.emit(id, 'removed');
+  }
+
   on(listener: Listener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
 
-  private emit(id: string): void {
-    for (const listener of this.listeners) listener(id);
+  private emit(id: string, change: Change): void {
+    for (const listener of this.listeners) listener(id, change);
   }
 
   private async fetchInput(id: string): Promise<PartInput> {

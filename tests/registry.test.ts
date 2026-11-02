@@ -92,4 +92,33 @@ describe('registry', () => {
     expect(changed).toEqual(['resistor-1k', 'resistor-220r']);
     expect(registry.get('resistor-220r')!.shape).toMatchObject({ color: '#ffffff' });
   });
+
+  it('removes a part, tells listeners, and lists dependants and bases', async () => {
+    const remix: PartInput = {
+      id: 'my-resistor',
+      extends: 'resistor-1k',
+      model: { type: 'resistor', resistance: 220 },
+    };
+    const { registry } = registryWith({ 'resistor-1k': base });
+    await registry.upsert(remix);
+    expect(registry.baseOf('my-resistor')).toBe('resistor-1k');
+    expect(registry.dependants('resistor-1k')).toEqual(['my-resistor']);
+    expect(registry.isCatalogPart('resistor-1k')).toBe(true);
+    expect(registry.isCatalogPart('my-resistor')).toBe(false);
+
+    const changes: string[] = [];
+    registry.on((id, change) => changes.push(`${change}:${id}`));
+    registry.remove('my-resistor');
+    expect(changes).toEqual(['removed:my-resistor']);
+    expect(registry.get('my-resistor')).toBeUndefined();
+    // The base was fetched only to resolve the remix. It is not a loaded part.
+    expect(registry.list()).toEqual([]);
+  });
+
+  it('resolves a draft without storing it', async () => {
+    const { registry } = registryWith({ 'resistor-1k': base });
+    const part = await registry.resolve({ id: 'my-draft', extends: 'resistor-1k' });
+    expect(part.model).toEqual(base.model);
+    expect(registry.get('my-draft')).toBeUndefined();
+  });
 });

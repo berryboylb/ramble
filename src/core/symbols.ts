@@ -1,5 +1,6 @@
 // Schematic symbols for the library list, as SVG path data in a 40 × 20 view box.
 // The catalog plugin puts the path into each category file, so the list shows before any 3D code loads.
+// The app uses the same table for custom parts and for the symbol list in the editor.
 
 export const SYMBOLS: Record<string, string> = {
   resistor: 'M0 10h8l2-5 4 10 4-10 4 10 4-10 4 10 2-5h8',

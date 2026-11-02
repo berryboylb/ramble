@@ -75,9 +75,20 @@ export class OrbitCamera {
     element.addEventListener('pointerup', this.onUp);
     element.addEventListener('pointercancel', this.onUp);
     element.addEventListener('wheel', this.onWheel, { passive: false });
-    element.addEventListener('contextmenu', (e) => e.preventDefault());
+    element.addEventListener('contextmenu', this.onContextMenu);
     window.addEventListener('keydown', this.onKey);
     this.apply();
+  }
+
+  dispose(): void {
+    const { element } = this;
+    element.removeEventListener('pointerdown', this.onDown);
+    element.removeEventListener('pointermove', this.onMove);
+    element.removeEventListener('pointerup', this.onUp);
+    element.removeEventListener('pointercancel', this.onUp);
+    element.removeEventListener('wheel', this.onWheel);
+    element.removeEventListener('contextmenu', this.onContextMenu);
+    window.removeEventListener('keydown', this.onKey);
   }
 
   /** Advances damping and animation. Returns true while the camera still moves. */
@@ -217,6 +228,8 @@ export class OrbitCamera {
     if (this.pointers.size > 0) this.yawVelocity = this.pitchVelocity = 0;
     this.invalidate();
   };
+
+  private onContextMenu = (event: Event): void => event.preventDefault();
 
   private onWheel = (event: WheelEvent): void => {
     event.preventDefault();

@@ -5,12 +5,11 @@ import {
   Color,
   Group,
   Mesh,
-  MeshStandardMaterial,
+  type MeshStandardMaterial,
   type Object3D,
   Plane,
   Raycaster,
   Sphere,
-  SphereGeometry,
   TubeGeometry,
   Vector2,
   Vector3,
@@ -18,9 +17,10 @@ import {
 import { terminals } from '../core/models.ts';
 import { compile, type Compiled, pinKey } from '../core/netlist.ts';
 import type { Registry } from '../core/registry.ts';
-import type { ModelSpec, PartDef, PinRef } from '../core/types.ts';
+import type { ModelSpec, PartDef, PinRef, SavedBoard, SavedPart } from '../core/types.ts';
 import { formatSI } from '../core/units.ts';
 import { material } from '../render/cache.ts';
+import { PIN_HOVER, PIN_MATERIAL, pinMarker } from '../render/pins.ts';
 import type { View } from '../render/scene.ts';
 import { buildShape } from '../render/shapes/index.ts';
 import type { SimState } from '../sim/protocol.ts';
@@ -28,20 +28,6 @@ import type { SimState } from '../sim/protocol.ts';
 const GRID = 1.27;
 const TAP_PIXELS = 5;
 const WIRE_COLORS = ['#e5484d', '#3e63dd', '#f5d90a', '#30a46c', '#f76b15', '#1d2127'];
-const PIN_GEOMETRY = new SphereGeometry(0.6, 12, 8);
-// Pins draw on top of part bodies. Many pins are under the body (LED, DIP, TO-92), and the user
-// must still see and click them.
-const pinMaterial = (color: string) =>
-  new MeshStandardMaterial({
-    color,
-    metalness: 0.6,
-    roughness: 0.4,
-    depthTest: false,
-    transparent: true,
-  });
-const PIN_MATERIAL = pinMaterial('#d4af37');
-const PIN_HOVER = pinMaterial('#4cc38a');
-const PIN_RENDER_ORDER = 10;
 
 export interface Instance {
   id: string;
@@ -73,6 +59,8 @@ export interface WorkbenchEvents {
   onModel(index: number, model: ModelSpec): void;
   onHint(text: string): void;
   onPartView(active: boolean): void;
+  /** Something on the board changed that the saved board must keep. */
+  onBoardChanged(): void;
 }
 
 /** Designator prefix for each part, for example R for resistors. */
@@ -134,7 +122,9 @@ export class Workbench {
     window.addEventListener('keydown', this.onKey);
     view.onFrame(() => this.updateLabels());
 
-    registry.on((id) => {
+    registry.on((id, change) => {
+      // A part is removed only when nothing on the board uses it.
+      if (change === 'removed') return;
       for (const instance of this.instances.values()) {
         if (instance.def.id !== id) continue;
         instance.def = registry.get(id)!;
@@ -164,6 +154,7 @@ export class Workbench {
     void this.rebuild(instance);
     const index = this.compiled?.elementIndex.get(instance.id);
     if (index !== undefined) this.events.onModel(index, modelOf(instance));
+    this.events.onBoardChanged();
   }
 
   toggleSwitch(instance: Instance): void {
@@ -178,6 +169,7 @@ export class Workbench {
     if (!instance) return;
     instance.turns = (instance.turns + 1) % 4;
     this.place(instance);
+    if (instance !== this.ghost) this.events.onBoardChanged();
   }
 
   deleteSelected(): void {
@@ -242,6 +234,56 @@ export class Workbench {
     this.view.invalidate();
   }
 
+  /** True when a part on the board uses this part definition. */
+  usesPart(defId: string): boolean {
+    return [...this.instances.values()].some((instance) => instance.def.id === defId);
+  }
+
+  /** The board as plain data, for saving. */
+  serialize(): SavedBoard {
+    return {
+      version: 1,
+      parts: [...this.instances.values()].map((i) => ({
+        id: i.id,
+        label: i.label,
+        defId: i.def.id,
+        params: i.params,
+        x: i.x,
+        z: i.z,
+        turns: i.turns,
+      })),
+      wires: this.wires.map((w) => ({ a: w.a, b: w.b })),
+    };
+  }
+
+  /** Replaces the board with a saved one. Returns the ids of parts that no longer exist. */
+  async restore(board: SavedBoard): Promise<string[]> {
+    this.removeAll();
+    const missing: string[] = [];
+    for (const saved of board.parts) {
+      const def = await this.registry.load(saved.defId).catch(() => undefined);
+      if (!def) {
+        missing.push(saved.defId);
+        continue;
+      }
+      const instance = this.createInstance(def, saved);
+      await this.rebuild(instance);
+      this.instances.set(instance.id, instance);
+      this.view.scene.add(instance.object);
+    }
+    for (const { a, b } of board.wires) {
+      if (this.pinExists(a) && this.pinExists(b)) this.createWire(a, b);
+    }
+    this.circuitChanged();
+    return missing;
+  }
+
+  /** Removes every part and wire. */
+  clear(): void {
+    this.removeAll();
+    this.circuitChanged();
+  }
+
   /** Voltage and current of a part from the last simulation state. */
   readout(instance: Instance): { voltage: number; current: number } | undefined {
     const index = this.compiled?.elementIndex.get(instance.id);
@@ -251,24 +293,51 @@ export class Workbench {
 
   // Building and placing.
 
-  private createInstance(def: PartDef): Instance {
+  /** A new instance, or one from a saved board. Ids and designators stay unique either way. */
+  private createInstance(def: PartDef, saved?: SavedPart): Instance {
     const prefix = prefixOf(def);
-    const count = (this.counters.get(prefix) ?? 0) + 1;
-    this.counters.set(prefix, count);
+    let label: string;
+    if (saved) {
+      label = saved.label;
+      const count = Number(/\d+$/.exec(label)?.[0] ?? 0);
+      this.counters.set(prefix, Math.max(this.counters.get(prefix) ?? 0, count));
+      this.nextId = Math.max(this.nextId, Number(saved.id.slice(1)) + 1);
+    } else {
+      const count = (this.counters.get(prefix) ?? 0) + 1;
+      this.counters.set(prefix, count);
+      label = `${prefix}${count}`;
+    }
     const object = new Group();
     const instance: Instance = {
-      id: `p${this.nextId++}`,
-      label: `${prefix}${count}`,
+      id: saved?.id ?? `p${this.nextId++}`,
+      label,
       def,
-      params: {},
-      x: 0,
-      z: 0,
-      turns: 0,
+      params: { ...saved?.params },
+      x: saved?.x ?? 0,
+      z: saved?.z ?? 0,
+      turns: saved?.turns ?? 0,
       object,
       pins: [],
     };
     object.userData.instance = instance.id;
     return instance;
+  }
+
+  private removeAll(): void {
+    this.cancel();
+    this.select(null);
+    for (const instance of this.instances.values()) {
+      this.view.scene.remove(instance.object);
+      this.view.labels.delete(`part:${instance.id}`);
+    }
+    this.instances.clear();
+    for (const wire of [...this.wires]) this.removeWire(wire);
+    this.counters.clear();
+  }
+
+  private pinExists(ref: PinRef): boolean {
+    const instance = this.instances.get(ref.inst);
+    return !!instance && ref.pin < instance.pins.length;
   }
 
   private async rebuild(instance: Instance): Promise<void> {
@@ -283,12 +352,14 @@ export class Workbench {
     instance.glow = built.glow;
     const names = terminals(model);
     built.pins.forEach((p, index) => {
-      const pin = new Mesh(PIN_GEOMETRY, PIN_MATERIAL);
-      pin.position.copy(p);
-      pin.renderOrder = PIN_RENDER_ORDER;
+      const pin = pinMarker(p);
       pin.userData.pin = { inst: instance.id, pin: index, name: names[index] };
       instance.object.add(pin);
     });
+    // An edited part can have fewer pins than before. Its wires to the lost pins go.
+    for (const wire of this.wires.filter((w) => !this.pinExists(w.a) || !this.pinExists(w.b))) {
+      if (wire.a.inst === instance.id || wire.b.inst === instance.id) this.removeWire(wire);
+    }
     this.place(instance);
   }
 
@@ -321,6 +392,7 @@ export class Workbench {
     }));
     this.compiled = compile(parts, this.wires);
     this.events.onCircuit(this.compiled);
+    this.events.onBoardChanged();
   }
 
   // Wires.
@@ -354,13 +426,17 @@ export class Workbench {
         (pinKey(w.a) === pinKey(b) && pinKey(w.b) === pinKey(a)),
     );
     if (exists) return;
+    this.createWire(a, b);
+    this.circuitChanged();
+  }
+
+  private createWire(a: PinRef, b: PinRef): void {
     const id = `w${this.nextId++}`;
     const color = WIRE_COLORS[this.wires.length % WIRE_COLORS.length];
     const mesh = new Mesh(this.wireGeometry(this.pinWorld(a), this.pinWorld(b)), material(color));
     mesh.userData.wire = id;
     this.wires.push({ id, a, b, mesh });
     this.view.scene.add(mesh);
-    this.circuitChanged();
   }
 
   private removeWire(wire: Wire): void {
@@ -535,6 +611,7 @@ export class Workbench {
   private onUp = (event: PointerEvent): void => {
     const drag = this.drag;
     this.drag = undefined;
+    if (drag?.moved) this.events.onBoardChanged();
     const isTap =
       this.down &&
       Math.hypot(event.clientX - this.down.x, event.clientY - this.down.y) <= TAP_PIXELS;
